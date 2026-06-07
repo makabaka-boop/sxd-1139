@@ -71,7 +71,7 @@
           v-model="formData.idCard" 
           placeholder="请输入身份证号"
           :class="{ 'input-error': errors.idCard }"
-          @input="validateIdCard"
+          @input="validateIdCardField"
         />
         <span v-if="errors.idCard" class="error-text">{{ errors.idCard }}</span>
       </div>
@@ -170,7 +170,7 @@ const validateActivityBatch = () => {
   return result.valid
 }
 
-const validateIdCard = () => {
+const validateIdCardField = () => {
   const result = validateIdCard(props.formData.idCard)
   errors.idCard = result.valid ? '' : result.message
   emit('update')
@@ -182,7 +182,7 @@ const validateAll = () => {
   const v2 = validatePhoneField()
   const v3 = validateEmailField()
   const v4 = validateActivityBatch()
-  const v5 = validateIdCard()
+  const v5 = validateIdCardField()
   return v1 && v2 && v3 && v4 && v5
 }
 

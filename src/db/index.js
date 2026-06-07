@@ -10,6 +10,23 @@ export const STORES = {
   FIELD_CONFIGS: 'fieldConfigs'
 }
 
+function toPlainObject(obj) {
+  if (obj === null || obj === undefined) return obj
+  if (Array.isArray(obj)) {
+    return obj.map(item => toPlainObject(item))
+  }
+  if (typeof obj === 'object') {
+    const plain = {}
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        plain[key] = toPlainObject(obj[key])
+      }
+    }
+    return plain
+  }
+  return obj
+}
+
 export async function initDB() {
   return openDB(DB_NAME, DB_VERSION, {
     upgrade(db) {
@@ -75,8 +92,9 @@ export async function getRegistrationById(id) {
 export async function addRegistration(data) {
   const db = await getDB()
   const now = new Date().toISOString()
+  const plainData = toPlainObject(data)
   const record = {
-    ...data,
+    ...plainData,
     createdAt: now,
     updatedAt: now
   }
@@ -88,9 +106,10 @@ export async function updateRegistration(id, data) {
   const existing = await db.get(STORES.REGISTRATIONS, id)
   if (!existing) return null
   
+  const plainData = toPlainObject(data)
   const updated = {
     ...existing,
-    ...data,
+    ...plainData,
     updatedAt: new Date().toISOString()
   }
   await db.put(STORES.REGISTRATIONS, updated)
@@ -140,13 +159,14 @@ export async function getDraftById(id) {
 export async function saveDraft(data) {
   const db = await getDB()
   const now = new Date().toISOString()
+  const plainData = toPlainObject(data)
   
-  if (data.id) {
-    const existing = await db.get(STORES.DRAFTS, data.id)
+  if (plainData.id) {
+    const existing = await db.get(STORES.DRAFTS, plainData.id)
     if (existing) {
       const updated = {
         ...existing,
-        ...data,
+        ...plainData,
         updatedAt: now
       }
       await db.put(STORES.DRAFTS, updated)
@@ -154,7 +174,7 @@ export async function saveDraft(data) {
     }
   }
   
-  const record = { ...data }
+  const record = { ...plainData }
   delete record.id
   record.createdAt = now
   record.updatedAt = now
