@@ -38,6 +38,9 @@
 import { computed } from 'vue'
 import { deleteDraft } from '../db'
 import { formatDate } from '../utils'
+import { useModal } from '../composables/useModal'
+
+const { confirm } = useModal()
 
 const props = defineProps({
   drafts: {
@@ -55,7 +58,8 @@ const sortedDrafts = computed(() => {
 })
 
 const handleDelete = async (draft) => {
-  if (confirm(`确定要删除这份草稿吗？`)) {
+  const ok = await confirm(`确定要删除这份草稿吗？`)
+  if (ok) {
     await deleteDraft(draft.id)
     emit('refresh')
   }

@@ -16,8 +16,7 @@ export function formatDate(dateStr) {
 
 export function exportToCSV(data, filename = 'registrations.csv') {
   if (!data || data.length === 0) {
-    alert('没有数据可导出')
-    return
+    return false
   }
 
   const headers = [
@@ -56,6 +55,7 @@ export function exportToCSV(data, filename = 'registrations.csv') {
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
+  return true
 }
 
 export function debounce(fn, delay = 300) {
@@ -96,3 +96,37 @@ export const DEFAULT_ACTIVITY_BATCHES = [
   '2024秋季场',
   '2024冬季场'
 ]
+
+export function validatePhone(phone) {
+  if (!phone) return { valid: false, message: '请输入手机号' }
+  const reg = /^1[3-9]\d{9}$/
+  if (!reg.test(phone)) {
+    return { valid: false, message: '请输入正确的11位手机号' }
+  }
+  return { valid: true }
+}
+
+export function validateEmail(email) {
+  if (!email) return { valid: true }
+  const reg = /^[\w.-]+@[\w.-]+\.\w+$/
+  if (!reg.test(email)) {
+    return { valid: false, message: '请输入正确的邮箱地址' }
+  }
+  return { valid: true }
+}
+
+export function validateIdCard(idCard) {
+  if (!idCard) return { valid: true }
+  const reg = /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/
+  if (!reg.test(idCard)) {
+    return { valid: false, message: '请输入正确的身份证号' }
+  }
+  return { valid: true }
+}
+
+export function validateRequired(value, fieldName = '该项') {
+  if (value === undefined || value === null || value === '') {
+    return { valid: false, message: `请输入${fieldName}` }
+  }
+  return { valid: true }
+}

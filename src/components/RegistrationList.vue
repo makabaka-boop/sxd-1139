@@ -58,7 +58,8 @@
           </option>
         </select>
       </div>
-      <div class="filter-item">
+      <div class="filter-item filter-item-btn">
+        <label>&nbsp;</label>
         <button class="btn btn-outline btn-sm" @click="resetFilters">
           重置筛选
         </button>
@@ -135,6 +136,9 @@ import {
   formatDate,
   exportToCSV
 } from '../utils'
+import { useModal } from '../composables/useModal'
+
+const { confirm, warning, success, error } = useModal()
 
 const props = defineProps({
   registrations: {
@@ -212,13 +216,19 @@ const getFeeLabel = (value) => getLabel(FEE_STATUS_OPTIONS, value)
 const getReviewLabel = (value) => getLabel(REVIEW_STATUS_OPTIONS, value)
 
 const handleDelete = async (item) => {
-  if (confirm(`确定要删除 ${item.name} 的报名记录吗？`)) {
+  const ok = await confirm(`确定要删除 ${item.name} 的报名记录吗？`)
+  if (ok) {
     await deleteRegistration(item.id)
     emit('refresh')
   }
 }
 
 const handleExport = () => {
-  exportToCSV(filteredList.value, `报名列表_${new Date().toLocaleDateString()}.csv`)
+  const result = exportToCSV(filteredList.value, `报名列表_${new Date().toLocaleDateString()}.csv`)
+  if (result) {
+    success('导出成功')
+  } else {
+    warning('没有数据可导出')
+  }
 }
 </script>

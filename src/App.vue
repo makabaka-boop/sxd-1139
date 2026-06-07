@@ -62,6 +62,20 @@
         </div>
       </div>
     </main>
+
+    <ToastModal 
+      :visible="modalState.visible"
+      :title="modalState.title"
+      :message="modalState.message"
+      :type="modalState.type"
+      :confirm-text="modalState.confirmText"
+      :cancel-text="modalState.cancelText"
+      :show-cancel="modalState.showCancel"
+      :close-on-overlay="modalState.closeOnOverlay"
+      @update:visible="val => modalState.visible = val"
+      @confirm="handleConfirm"
+      @cancel="handleCancel"
+    />
   </div>
 </template>
 
@@ -70,7 +84,11 @@ import { ref, onMounted } from 'vue'
 import RegistrationList from './components/RegistrationList.vue'
 import RegistrationForm from './components/RegistrationForm.vue'
 import DraftList from './components/DraftList.vue'
+import ToastModal from './components/ToastModal.vue'
 import { getAllRegistrations, getAllDrafts, initDB } from './db'
+import { useModal } from './composables/useModal'
+
+const { modalState, handleConfirm, handleCancel } = useModal()
 
 const currentView = ref('list')
 const registrations = ref([])

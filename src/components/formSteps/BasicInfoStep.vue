@@ -8,8 +8,10 @@
           type="text" 
           v-model="formData.name" 
           placeholder="请输入姓名"
-          @input="$emit('update')"
+          :class="{ 'input-error': errors.name }"
+          @input="validateName"
         />
+        <span v-if="errors.name" class="error-text">{{ errors.name }}</span>
       </div>
       <div class="form-item">
         <label>手机号 <span class="required">*</span></label>
@@ -17,8 +19,10 @@
           type="tel" 
           v-model="formData.phone" 
           placeholder="请输入手机号"
+          :class="{ 'input-error': errors.phone }"
           @input="onPhoneChange"
         />
+        <span v-if="errors.phone" class="error-text">{{ errors.phone }}</span>
       </div>
       <div class="form-item">
         <label>邮箱</label>
@@ -26,14 +30,17 @@
           type="email" 
           v-model="formData.email" 
           placeholder="请输入邮箱"
+          :class="{ 'input-error': errors.email }"
           @input="onEmailChange"
         />
+        <span v-if="errors.email" class="error-text">{{ errors.email }}</span>
       </div>
       <div class="form-item">
         <label>活动批次 <span class="required">*</span></label>
         <select 
           v-model="formData.activityBatch"
-          @change="$emit('update')"
+          :class="{ 'input-error': errors.activityBatch }"
+          @change="validateActivityBatch"
         >
           <option value="">请选择活动批次</option>
           <option 
@@ -44,6 +51,7 @@
             {{ batch }}
           </option>
         </select>
+        <span v-if="errors.activityBatch" class="error-text">{{ errors.activityBatch }}</span>
       </div>
       <div class="form-item">
         <label>性别</label>
@@ -62,8 +70,10 @@
           type="text" 
           v-model="formData.idCard" 
           placeholder="请输入身份证号"
-          @input="$emit('update')"
+          :class="{ 'input-error': errors.idCard }"
+          @input="validateIdCard"
         />
+        <span v-if="errors.idCard" class="error-text">{{ errors.idCard }}</span>
       </div>
     </div>
 
@@ -104,9 +114,15 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, reactive } from 'vue'
 import { findDuplicateRegistrations, findDraftsByContact } from '../../db'
-import { DEFAULT_ACTIVITY_BATCHES } from '../../utils'
+import { 
+  DEFAULT_ACTIVITY_BATCHES, 
+  validatePhone, 
+  validateEmail, 
+  validateIdCard, 
+  validateRequired 
+} from '../../utils'
 
 const props = defineProps({
   formData: {
@@ -119,6 +135,56 @@ const emit = defineEmits(['update', 'merge', 'view', 'duplicates-found'])
 
 const activityBatches = DEFAULT_ACTIVITY_BATCHES
 const duplicates = ref([])
+
+const errors = reactive({
+  name: '',
+  phone: '',
+  email: '',
+  activityBatch: '',
+  idCard: ''
+})
+
+const validateName = () => {
+  const result = validateRequired(props.formData.name, '姓名')
+  errors.name = result.valid ? '' : result.message
+  emit('update')
+  return result.valid
+}
+
+const validatePhoneField = () => {
+  const result = validatePhone(props.formData.phone)
+  errors.phone = result.valid ? '' : result.message
+  return result.valid
+}
+
+const validateEmailField = () => {
+  const result = validateEmail(props.formData.email)
+  errors.email = result.valid ? '' : result.message
+  return result.valid
+}
+
+const validateActivityBatch = () => {
+  const result = validateRequired(props.formData.activityBatch, '活动批次')
+  errors.activityBatch = result.valid ? '' : result.message
+  emit('update')
+  return result.valid
+}
+
+const validateIdCard = () => {
+  const result = validateIdCard(props.formData.idCard)
+  errors.idCard = result.valid ? '' : result.message
+  emit('update')
+  return result.valid
+}
+
+const validateAll = () => {
+  const v1 = validateName()
+  const v2 = validatePhoneField()
+  const v3 = validateEmailField()
+  const v4 = validateActivityBatch()
+  const v5 = validateIdCard()
+  return v1 && v2 && v3 && v4 && v5
+}
 
 const checkDuplicates = async () => {
   const phone = props.formData.phone?.trim()
@@ -146,6 +212,7 @@ const checkDuplicates = async () => {
 }
 
 const onPhoneChange = () => {
+  validatePhoneField()
   emit('update')
   if (props.formData.phone?.length >= 7) {
     checkDuplicates()
@@ -153,11 +220,17 @@ const onPhoneChange = () => {
 }
 
 const onEmailChange = () => {
+  validateEmailField()
   emit('update')
   if (props.formData.email?.includes('@')) {
     checkDuplicates()
   }
 }
+
+defineExpose({
+  validateAll,
+  errors
+})
 
 watch(() => [props.formData.phone, props.formData.email], () => {
   if (!props.formData.phone && !props.formData.email) {

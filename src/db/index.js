@@ -154,11 +154,10 @@ export async function saveDraft(data) {
     }
   }
   
-  const record = {
-    ...data,
-    createdAt: now,
-    updatedAt: now
-  }
+  const record = { ...data }
+  delete record.id
+  record.createdAt = now
+  record.updatedAt = now
   const id = await db.add(STORES.DRAFTS, record)
   return { ...record, id }
 }

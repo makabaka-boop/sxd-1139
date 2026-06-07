@@ -532,6 +532,21 @@ body {
   min-height: 80px;
 }
 
+.form-item .input-error {
+  border-color: #ff4d4f;
+}
+
+.form-item .input-error:focus {
+  border-color: #ff4d4f;
+  box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.1);
+}
+
+.error-text {
+  color: #ff4d4f;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
 .duplicate-warning {
   margin-top: 20px;
   padding: 16px;

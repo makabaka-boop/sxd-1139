@@ -23,6 +23,7 @@
     <div class="form-body">
       <component 
         :is="currentStepComponent" 
+        ref="stepRef"
         :form-data="formData"
         @update="onFormUpdate"
         @merge="handleMerge"
@@ -102,6 +103,9 @@ import FeeStep from './formSteps/FeeStep.vue'
 import RemarkStep from './formSteps/RemarkStep.vue'
 import { saveDraft, addRegistration, updateRegistration, deleteDraft, mergeRegistrationData } from '../db'
 import { debounce, formatDate } from '../utils'
+import { useModal } from '../composables/useModal'
+
+const { success, error, warning, confirm } = useModal()
 
 const props = defineProps({
   initialData: {
@@ -119,6 +123,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['submitted', 'cancelled', 'saved'])
+
+const stepRef = ref(null)
 
 const steps = [
   { key: 'basic', label: '基本信息', component: BasicInfoStep },
@@ -170,7 +176,11 @@ const goToStep = (index) => {
   currentStep.value = index
 }
 
-const nextStep = () => {
+const nextStep = async () => {
+  if (currentStep.value === 0 && stepRef.value?.validateAll) {
+    const valid = stepRef.value.validateAll()
+    if (!valid) return
+  }
   if (currentStep.value < steps.length - 1) {
     currentStep.value++
   }
@@ -215,7 +225,7 @@ const saveAsDraft = async () => {
     if (!formData.value.id) {
       formData.value.id = saved.id
     }
-    alert('草稿已保存')
+    success('草稿已保存')
     emit('saved', saved)
   }
 }
@@ -228,7 +238,8 @@ const handleMerge = (oldData) => {
 
 const handleView = (item) => {
   console.log('View item:', item)
-  alert(`查看详情：\n${JSON.stringify(item, null, 2)}`)
+  const text = `姓名：${item.name || '-'}\n手机号：${item.phone || '-'}\n邮箱：${item.email || '-'}\n活动批次：${item.activityBatch || '-'}`
+  success(text, { title: '报名详情' })
 }
 
 const confirmMerge = () => {
@@ -247,8 +258,9 @@ const skipMerge = () => {
   mergeNewData.value = null
 }
 
-const resetForm = () => {
-  if (confirm('确定要重置表单吗？未保存的内容将丢失。')) {
+const resetForm = async () => {
+  const ok = await confirm('确定要重置表单吗？未保存的内容将丢失。')
+  if (ok) {
     formData.value = createEmptyForm()
     lastSavedAt.value = null
     currentStep.value = 0
@@ -256,15 +268,17 @@ const resetForm = () => {
 }
 
 const submitForm = async () => {
-  if (!isFormValid.value) {
-    alert('请填写必填项：姓名、手机号、活动批次')
-    return
+  if (stepRef.value?.validateAll) {
+    const valid = stepRef.value.validateAll()
+    if (!valid) {
+      warning('请修正表单中的错误后再提交')
+      return
+    }
   }
 
   if (foundDuplicates.value.length > 0 && !showMergeDialog.value) {
-    if (!confirm('检测到可能的重复报名，确定仍要提交吗？')) {
-      return
-    }
+    const ok = await confirm('检测到可能的重复报名，确定仍要提交吗？')
+    if (!ok) return
   }
 
   try {
@@ -283,14 +297,14 @@ const submitForm = async () => {
       }
     }
 
-    alert('提交成功！')
+    await success('提交成功！')
     emit('submitted')
     formData.value = createEmptyForm()
     currentStep.value = 0
     lastSavedAt.value = null
-  } catch (error) {
-    console.error('Submit error:', error)
-    alert('提交失败：' + error.message)
+  } catch (err) {
+    console.error('Submit error:', err)
+    error('提交失败：' + err.message)
   }
 }
 
